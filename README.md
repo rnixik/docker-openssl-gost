@@ -3,8 +3,8 @@
 This image was built to have ability to connect to servers with GOST SSL certificates.
 In addition, it helps to encrypt, decrypt, hash messages with GOST algorithms.
 
-Since vsersion 1.1.0 OpenSSL does not contain GOST-engine anymore, but it can be compiled and used separately.
-This images do this work.
+Since version 1.1.0 OpenSSL does not contain GOST-engine anymore, but it can be compiled and used separately.
+This image does this work.
 
 Output of `openssl ciphers`:
 
@@ -38,7 +38,7 @@ Run command with mounted current dir without interactive mode:
 docker run --rm -v `pwd`:`pwd` -w `pwd` rnix/openssl-gost openssl version
 ```
 
-If you use Windows, `pwd` is incorrent. Use absolute path instead, for example:
+If you use Windows, `pwd` is incorrect. Use absolute path instead, for example:
 ```
 docker run --rm -i -t -v /c/workspace/:/c/workspace/ -w /c/workspace/ rnix/openssl-gost bash
 ```
@@ -117,7 +117,7 @@ openssl cms -verify -in signed.txt -signer cert.pem -inform DER -CAfile crypto_p
 ```
 
 
-## Licence
+## License
 
     The MIT License
 
