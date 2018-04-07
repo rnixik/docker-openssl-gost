@@ -50,7 +50,7 @@ Array
 
 https://hub.docker.com/r/rnix/php-fpm-gost/
 
-`docker run rnix/php-fpm/gost php -i`
+`docker run rnix/php-fpm-gost php -i`
 
 
 ## How image was built
