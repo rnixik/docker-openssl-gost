@@ -11,7 +11,8 @@ RUN cd /usr/local/src \
   && ./config shared --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -Wl,-rpath,/usr/local/ssl/lib \
   && make && make install \
   && mv /usr/bin/openssl /root/ \
-  && ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl
+  && ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl \
+  && rm -rf "/usr/local/src/openssl-${OPENSSL_VERSION}.tar.gz" "/usr/local/src/openssl-${OPENSSL_VERSION}" 
 
 # Update path of shared libraries
 RUN echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
@@ -31,9 +32,8 @@ RUN apt-get install cmake unzip -y \
   && cd ../bin \
   && cp gostsum gost12sum /usr/local/bin \
   && cd .. \
-  && mkdir -p /usr/local/man/man1 \
-  && cp gost12sum.1 gostsum.1 /usr/local/man/man1 \
-  && cp bin/gost.so /usr/local/ssl/lib/engines-1.1
+  && cp bin/gost.so /usr/local/ssl/lib/engines-1.1 \
+  && rm -rf "/usr/local/src/gost-engine.zip" "/usr/local/src/engine-${GOST_ENGINE_VERSION}" 
 
 # Enable engine
 RUN sed -i '6i openssl_conf=openssl_def' /usr/local/ssl/openssl.cnf \
@@ -61,7 +61,8 @@ RUN apt-get remove curl -y \
   && wget "https://curl.haxx.se/download/curl-${CURL_VERSION}.tar.gz" -O "curl-${CURL_VERSION}.tar.gz" \
   && tar -zxvf "curl-${CURL_VERSION}.tar.gz" \
   && cd "curl-${CURL_VERSION}" \
-  && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L/usr/local/ssl/lib" LD_LIBRARY_PATH=/usr/local/lib:/usr/local/ssl/lib ./configure --disable-shared --with-ssl=/usr/local/ssl --with-libssl-prefix=/usr/local/ssl \
+  && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L/usr/local/ssl/lib -Wl,-rpath,/usr/local/ssl/lib" LD_LIBRARY_PATH=/usr/local/ssl/lib \
+   ./configure --disable-shared --with-ssl=/usr/local/ssl --with-libssl-prefix=/usr/local/ssl \
   && make \
-  && make install
-
+  && make install \
+  && rm -rf "/usr/local/src/curl-${CURL_VERSION}.tar.gz" "/usr/local/src/curl-${CURL_VERSION}" 
