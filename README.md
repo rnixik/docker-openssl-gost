@@ -13,3 +13,64 @@ ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA
 Take a look to GOST-engine documentation: https://github.com/gost-engine/engine/blob/master/README.gost
 
 There are some issues with OpenSSL 1.1.0h and GOST-engine (GOST ciphers are not in list), so versions are fixed in default docker's build args.
+
+## Usage
+
+The image has been built and pushed into https://hub.docker.com/r/rnix/openssl-gost/.
+In examples below I use image *rnix/openssl-gost* from Docker Hub, but you can build this image for you own and use your tag.
+
+As usual, you can run commands directly from host or you can use 'interactive mode' with `-i`.
+Pull the image and run a container with mounted current dir in interactive mode:
+
+```
+docker run --rm -i -t -v `pwd`:`pwd` -w `pwd` rnix/openssl-gost bash
+```
+Run command with mounted current dir without interactive mode:
+
+```
+docker run --rm -v `pwd`:`pwd` -w `pwd` rnix/openssl-gost openssl version
+```
+
+If you use Windows, `pwd` is incorrent. Use absolute path instead, for example:
+```
+docker run --rm -i -t -v /c/workspace/:/c/workspace/ -w /c/workspace/ rnix/openssl-gost bash
+```
+    
+In the container you run commands.
+
+### Examples
+
+Show certificate of host with GOST
+```
+openssl s_client -connect gost.example.com:443 -showcerts
+```
+
+Send a file to host with POST and save the response into new file
+```
+curl -X POST --data-binary @file.txt https://gost.example.com --output response.txt
+```
+
+## Licence
+
+    The MIT License
+
+    Copyright (C) 2018 Roman Nix
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+
