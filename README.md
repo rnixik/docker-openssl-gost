@@ -16,7 +16,7 @@ GOST2012-GOST8912-GOST8912
 GOST2001-GOST89-GOST89
 ```
 
-Take a look to GOST-engine documentation: https://github.com/gost-engine/engine/blob/master/README.gost
+Take a look at GOST-engine documentation: https://github.com/gost-engine/engine/blob/master/README.gost
 
 There are some issues with OpenSSL 1.1.0h and GOST-engine (GOST ciphers are not in list), so versions are fixed in default docker's build args.
 
