@@ -62,7 +62,8 @@ RUN apt-get remove curl -y \
   && tar -zxvf "curl-${CURL_VERSION}.tar.gz" \
   && cd "curl-${CURL_VERSION}" \
   && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L/usr/local/ssl/lib -Wl,-rpath,/usr/local/ssl/lib" LD_LIBRARY_PATH=/usr/local/ssl/lib \
-   ./configure --disable-shared --with-ssl=/usr/local/ssl --with-libssl-prefix=/usr/local/ssl \
+   ./configure --prefix=/usr/local/curl --with-ssl=/usr/local/ssl --with-libssl-prefix=/usr/local/ssl \
   && make \
   && make install \
+  && ln -s /usr/local/curl/bin/curl /usr/bin/curl \
   && rm -rf "/usr/local/src/curl-${CURL_VERSION}.tar.gz" "/usr/local/src/curl-${CURL_VERSION}" 
