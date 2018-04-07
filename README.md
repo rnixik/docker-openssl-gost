@@ -117,6 +117,20 @@ openssl cms -verify -in signed.txt -signer cert.pem -inform DER -CAfile crypto_p
 ```
 
 
+## Using in other Dockerfiles
+
+Compiled libraries can be used in other Dockerfiles with multi-stage approach. Basic template is in `any-gost` directory.
+Working example with PHP is in `php-fpm-gost` directory.
+
+There some notices:
+
+* OpenSSL and cURL are build in custom directory `/usr/local/ssl` and `usr/local/curl` 
+  which contain `bin`, `include`, `lib`.
+* Before compiling the main Dockerfile folders `/usr/local/ssl` and `usr/local/curl` should be copied into new image.
+* During building packages openssl and curl can be installed and overwrite new `/usr/bin/openssl` and `/usr/bin/curl`.
+* Specify paths of libraries in configuring scripts to new locations.
+
+
 ## License
 
     The MIT License
