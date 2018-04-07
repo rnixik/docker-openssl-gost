@@ -1,12 +1,9 @@
 FROM ubuntu:16.04
 
-ARG OPENSSL_VERSION=1.1.0g
-ARG GOST_ENGINE_VERSION=openssl_1_1_0
-ARG CURL_VERSION=7.59.0
-
-RUN apt-get update && apt-get install build-essential libssl-dev wget -y
+RUN apt-get update && apt-get install build-essential wget -y
 
 # Build openssl
+ARG OPENSSL_VERSION=1.1.0g
 RUN cd /usr/local/src \
   && wget "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz" -O "openssl-${OPENSSL_VERSION}.tar.gz" \
   && tar -zxvf "openssl-${OPENSSL_VERSION}.tar.gz" \
@@ -20,15 +17,17 @@ RUN cd /usr/local/src \
 RUN echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
 
 # Build GOST-engine for OpenSSL
-RUN apt-get install git cmake unzip -y \
+ARG GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
+RUN apt-get install cmake unzip -y \
   && cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
   && unzip gost-engine.zip -d ./ \
   && cd "engine-${GOST_ENGINE_VERSION}" \
   && mkdir build \
   && cd build \
-  && cmake -DCMAKE_C_FLAGS='-I/usr/local/ssl/include -L/usr/local/ssl/lib' -DOPENSSL_ROOT_DIR=/usr/local/ssl  -DOPENSSL_INCLUDE_DIR=/usr/local/ssl/include -DOPENSSL_LIBRARIES=/usr/local/ssl/lib .. \
-  && make \
+  && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS='-I/usr/local/ssl/include -L/usr/local/ssl/lib' \
+   -DOPENSSL_ROOT_DIR=/usr/local/ssl  -DOPENSSL_INCLUDE_DIR=/usr/local/ssl/include -DOPENSSL_LIBRARIES=/usr/local/ssl/lib .. \
+  && cmake --build . --config Release \
   && cd ../bin \
   && cp gostsum gost12sum /usr/local/bin \
   && cd .. \
@@ -55,6 +54,7 @@ RUN sed -i '6i openssl_conf=openssl_def' /usr/local/ssl/openssl.cnf \
   && echo "CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet" >> /usr/local/ssl/openssl.cnf
 
 # Rebuild curl
+ARG CURL_VERSION=7.59.0
 RUN apt-get remove curl -y \
   && rm -rf /usr/local/include/curl \
   && cd /usr/local/src \

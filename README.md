@@ -12,4 +12,4 @@ ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA
 
 Take a look to GOST-engine documentation: https://github.com/gost-engine/engine/blob/master/README.gost
 
-There are some issues with OpenSSL 1.1.0h and GOST-engine, so versions are fixed in default docker's build args.
+There are some issues with OpenSSL 1.1.0h and GOST-engine (GOST ciphers are not in list), so versions are fixed in default docker's build args.
