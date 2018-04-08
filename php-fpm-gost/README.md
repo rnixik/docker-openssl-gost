@@ -61,7 +61,7 @@ using multi-stage building. Then PHP was compiled with them.
 Script `make_dockerfile.sh` does some changes to [official image](https://github.com/docker-library/php/tree/master/7.1/jessie/fpm).
 The result of it is included in this folder.
 
-## Restrictions
+## Limitations
 
 Unfortunelty, `curl_*` function inside php does not work with GOST-ciphers.
 The workaround is calling curl from system, for example `exec('curl https://gost.example.com')`.
