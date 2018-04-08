@@ -28,7 +28,7 @@ RUN cd /usr/local/src \
 
 # Build GOST-engine for OpenSSL
 ARG GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
-RUN apk add  --no-cache --virtual .persistent-deps cmake unzip \
+RUN apk add  --no-cache --virtual .build-deps cmake unzip \
   && cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
   && unzip gost-engine.zip -d ./ \
