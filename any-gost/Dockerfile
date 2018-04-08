@@ -1,7 +1,7 @@
 FROM rnix/openssl-gost AS openssl-gost
 
 # Replace with any other image based on Debian x86_64
-FROM debian:jessie
+FROM debian:stretch-slim
 
 COPY --from=openssl-gost /usr/local/ssl /usr/local/ssl
 COPY --from=openssl-gost /usr/local/ssl/bin/openssl /usr/bin/openssl

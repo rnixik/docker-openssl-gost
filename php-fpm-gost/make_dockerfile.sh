@@ -1,13 +1,13 @@
 #!/bin/bash
 
-DOCKER_BASE_URL="https://raw.githubusercontent.com/docker-library/php/master/7.1/jessie/fpm"
+DOCKER_BASE_URL="https://raw.githubusercontent.com/docker-library/php/master/7.2/stretch/fpm"
+ORIGINAL_INSTRUCTION="FROM debian:stretch-slim"
+
 DOCKER_BUILD_FILES=( Dockerfile docker-php-entrypoint docker-php-ext-configure docker-php-ext-enable docker-php-ext-install docker-php-source)
 for FILE in "${DOCKER_BUILD_FILES[@]}"
 do
   wget -O "${FILE}" "${DOCKER_BASE_URL}/${FILE}"
 done
-
-ORIGINAL_INSTRUCTION="FROM debian:jessie"
 
 STAGE_INSTRUCTIONS=$(cat << END
 FROM rnix/openssl-gost AS openssl-gost

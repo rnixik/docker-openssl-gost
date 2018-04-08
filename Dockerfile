@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM debian:stretch-slim
 
 RUN apt-get update && apt-get install build-essential wget -y
 
@@ -24,6 +24,7 @@ RUN apt-get install cmake unzip -y \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
   && unzip gost-engine.zip -d ./ \
   && cd "engine-${GOST_ENGINE_VERSION}" \
+  && sed -i 's|printf("GOST engine already loaded\\n");|goto end;|' gost_eng.c \
   && mkdir build \
   && cd build \
   && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS='-I/usr/local/ssl/include -L/usr/local/ssl/lib' \

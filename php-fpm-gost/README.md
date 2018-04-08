@@ -63,6 +63,10 @@ The result of it is included in this folder.
 
 ## Limitations
 
-Unfortunelty, `curl_*` function inside php does not work with GOST-ciphers.
+If use https://github.com/docker-library/php/tree/master/7.1/jessie/fpm (7.1.16) as main image, then 
+`curl_*` function inside php does not work with GOST-ciphers.
 The workaround is calling curl from system, for example `exec('curl https://gost.example.com')`.
 
+With https://github.com/docker-library/php/tree/master/7.2/stretch/fpm there are no these limitations.
+There was a bug with message "GOST engine already loaded" in stdout for every php-command, 
+to fix it I changed one line in GOST-engine. I suppose it is bug in OpenSSL.
