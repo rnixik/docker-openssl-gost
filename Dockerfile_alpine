@@ -17,8 +17,10 @@ RUN apk add  --no-cache --virtual .build-deps wget \
 
 # Build openssl
 ARG OPENSSL_VERSION=1.1.0g
+ARG OPENSSL_SHA256="de4d501267da39310905cb6dc8c6121f7a2cad45a7707f76df828fe1b85073af"
 RUN cd /usr/local/src \
   && wget "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz" -O "openssl-${OPENSSL_VERSION}.tar.gz" \
+  && echo "$OPENSSL_SHA256" "openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - \
   && tar -zxvf "openssl-${OPENSSL_VERSION}.tar.gz" \
   && cd "openssl-${OPENSSL_VERSION}" \
   && ./config no-async shared --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -Wl,-rpath,/usr/local/ssl/lib \
@@ -28,9 +30,11 @@ RUN cd /usr/local/src \
 
 # Build GOST-engine for OpenSSL
 ARG GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
+ARG GOST_ENGINE_SHA256="4777b1dcb32f8d06abd5e04a9a2b5fe9877c018db0fc02f5f178f8a66b562025"
 RUN apk add  --no-cache --virtual .build-deps cmake unzip \
   && cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
+  && echo "$GOST_ENGINE_SHA256" gost-engine.zip | sha256sum -c - \
   && unzip gost-engine.zip -d ./ \
   && cd "engine-${GOST_ENGINE_VERSION}" \
   && sed -i 's|printf("GOST engine already loaded\\n");|goto end;|' gost_eng.c \
@@ -65,8 +69,10 @@ RUN sed -i '6i openssl_conf=openssl_def' /usr/local/ssl/openssl.cnf \
 
 # Rebuild curl
 ARG CURL_VERSION=7.59.0
+ARG CURL_SHA256="099d9c32dc7b8958ca592597c9fabccdf4c08cfb7c114ff1afbbc4c6f13c9e9e"
 RUN cd /usr/local/src \
   && wget "https://curl.haxx.se/download/curl-${CURL_VERSION}.tar.gz" -O "curl-${CURL_VERSION}.tar.gz" \
+  && echo "$CURL_SHA256" "curl-${CURL_VERSION}.tar.gz" | sha256sum -c - \
   && tar -zxvf "curl-${CURL_VERSION}.tar.gz" \
   && cd "curl-${CURL_VERSION}" \
   && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L/usr/local/ssl/lib -Wl,-rpath,/usr/local/ssl/lib" LD_LIBRARY_PATH=/usr/local/ssl/lib \
