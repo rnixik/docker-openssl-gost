@@ -117,7 +117,7 @@ openssl cms -verify -in signed.txt -signer cert.pem -inform DER -CAfile crypto_p
 ```
 
 
-## Using in other Dockerfiles
+## Usage in other Dockerfiles
 
 Compiled libraries can be used in other Dockerfiles with multi-stage approach. Basic template is in `any-gost` directory.
 Working example with PHP is in `php-fpm-gost` directory.
