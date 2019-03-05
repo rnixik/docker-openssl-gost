@@ -74,3 +74,18 @@ RUN apt-get remove curl -y \
   && make install \
   && ln -s /usr/local/curl/bin/curl /usr/bin/curl \
   && rm -rf "/usr/local/src/curl-${CURL_VERSION}.tar.gz" "/usr/local/src/curl-${CURL_VERSION}" 
+
+# Rebuild stunnel
+ARG STUNNEL_VERSION=5.50
+ARG STUNNEL_SHA256="951d92502908b852a297bd9308568f7c36598670b84286d3e05d4a3a550c0149"
+RUN cd /usr/local/src \
+  && wget "https://www.stunnel.org/downloads/stunnel-${STUNNEL_VERSION}.tar.gz" -O "stunnel-${STUNNEL_VERSION}.tar.gz" \
+  && echo "$STUNNEL_SHA256" "stunnel-${STUNNEL_VERSION}.tar.gz" | sha256sum -c - \
+  && tar -zxvf "stunnel-${STUNNEL_VERSION}.tar.gz" \
+  && cd "stunnel-${STUNNEL_VERSION}" \
+  && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L/usr/local/ssl/lib -Wl,-rpath,/usr/local/ssl/lib" LD_LIBRARY_PATH=/usr/local/ssl/lib \
+   ./configure --prefix=/usr/local/stunnel --with-ssl=/usr/local/ssl \
+  && make \
+  && make install \
+  && ln -s /usr/local/stunnel/bin/stunnel /usr/bin/stunnel \
+  && rm -rf "/usr/local/src/stunnel-${STUNNEL_VERSION}.tar.gz" "/usr/local/src/stunnel-${STUNNEL_VERSION}"
