@@ -22,7 +22,7 @@ RUN echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
 # Build GOST-engine for OpenSSL
 ARG GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
 ARG GOST_ENGINE_SHA256="4777b1dcb32f8d06abd5e04a9a2b5fe9877c018db0fc02f5f178f8a66b562025"
-RUN apt-get install cmake unzip -y \
+RUN apt-get update && apt-get install cmake unzip -y \
   && cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
   && echo "$GOST_ENGINE_SHA256" gost-engine.zip | sha256sum -c - \
