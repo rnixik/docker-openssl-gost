@@ -1,28 +1,38 @@
 FROM debian:stretch-slim
 
-RUN apt-get update && apt-get install build-essential wget -y
+RUN apt-get update && apt-get install build-essential wget git -y
 
 # Build openssl
-ARG OPENSSL_VERSION=1.1.0g
-ARG OPENSSL_SHA256="de4d501267da39310905cb6dc8c6121f7a2cad45a7707f76df828fe1b85073af"
-RUN cd /usr/local/src \
-  && wget "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz" -O "openssl-${OPENSSL_VERSION}.tar.gz" \
-  && echo "$OPENSSL_SHA256" "openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - \
-  && tar -zxvf "openssl-${OPENSSL_VERSION}.tar.gz" \
-  && cd "openssl-${OPENSSL_VERSION}" \
-  && ./config shared --prefix=/usr/local/ssl --openssldir=/usr/local/ssl -Wl,-rpath,/usr/local/ssl/lib \
-  && make && make install \
+#ARG OPENSSL_VERSION=1.1.1b
+#ARG OPENSSL_SHA256="5c557b023230413dfb0756f3137a13e6d726838ccd1430888ad15bfb2b43ea4b"
+#RUN cd /usr/local/src \
+#  && wget "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz" -O "openssl-${OPENSSL_VERSION}.tar.gz" \
+#  && echo "$OPENSSL_SHA256" "openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - \
+#  && tar -zxvf "openssl-${OPENSSL_VERSION}.tar.gz" \
+#  && cd "openssl-${OPENSSL_VERSION}" \
+#  && ./config shared -d --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
+#  && make all && make install_sw \
+#  && mv /usr/bin/openssl /root/ \
+#  && ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl \
+#  && rm -rf "/usr/local/src/openssl-${OPENSSL_VERSION}.tar.gz" "/usr/local/src/openssl-${OPENSSL_VERSION}"
+
+
+ARG PREFIX="/usr/local/ssl"
+RUN git clone --depth 1 -b master https://github.com/openssl/openssl.git \
+  && cd openssl \
+  && ./config shared -d --prefix=${PREFIX} --openssldir=${PREFIX} && make -j$(nproc) all && make install \
   && mv /usr/bin/openssl /root/ \
-  && ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl \
-  && rm -rf "/usr/local/src/openssl-${OPENSSL_VERSION}.tar.gz" "/usr/local/src/openssl-${OPENSSL_VERSION}" 
+  && ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl
 
 # Update path of shared libraries
 RUN echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
 
+ARG ENGINES=/usr/local/ssl/lib/engines-3
+
 # Build GOST-engine for OpenSSL
-ARG GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
-ARG GOST_ENGINE_SHA256="4777b1dcb32f8d06abd5e04a9a2b5fe9877c018db0fc02f5f178f8a66b562025"
-RUN apt-get update && apt-get install cmake unzip -y \
+ARG GOST_ENGINE_VERSION=af328b347cfbb3e4fa672b03700d70fdc8da892a
+ARG GOST_ENGINE_SHA256="e013a87983f2c030316c4b897c1ea7a12aab4bd8e36231d9e0ead25bd401d5d1"
+RUN apt-get update && apt-get install cmake unzip gcc -y \
   && cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
   && echo "$GOST_ENGINE_SHA256" gost-engine.zip | sha256sum -c - \
@@ -31,14 +41,14 @@ RUN apt-get update && apt-get install cmake unzip -y \
   && sed -i 's|printf("GOST engine already loaded\\n");|goto end;|' gost_eng.c \
   && mkdir build \
   && cd build \
-  && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS='-I/usr/local/ssl/include -L/usr/local/ssl/lib' \
-   -DOPENSSL_ROOT_DIR=/usr/local/ssl  -DOPENSSL_INCLUDE_DIR=/usr/local/ssl/include -DOPENSSL_LIBRARIES=/usr/local/ssl/lib .. \
+  && cmake -DCMAKE_BUILD_TYPE=Release \
+   -DOPENSSL_ROOT_DIR=/usr/local/ssl -DOPENSSL_LIBRARIES=/usr/local/ssl/lib -DOPENSSL_ENGINES_DIR=${ENGINES} .. \
   && cmake --build . --config Release \
-  && cd ../bin \
+  && cd bin \
   && cp gostsum gost12sum /usr/local/bin \
   && cd .. \
-  && cp bin/gost.so /usr/local/ssl/lib/engines-1.1 \
-  && rm -rf "/usr/local/src/gost-engine.zip" "/usr/local/src/engine-${GOST_ENGINE_VERSION}" 
+  && cp bin/gost.so "${ENGINES}" \
+  && rm -rf "/usr/local/src/gost-engine.zip" "/usr/local/src/engine-${GOST_ENGINE_VERSION}"
 
 # Enable engine
 RUN sed -i '6i openssl_conf=openssl_def' /usr/local/ssl/openssl.cnf \
@@ -54,13 +64,13 @@ RUN sed -i '6i openssl_conf=openssl_def' /usr/local/ssl/openssl.cnf \
   && echo "# Engine gost section" >> /usr/local/ssl/openssl.cnf \
   && echo "[gost_section]" >> /usr/local/ssl/openssl.cnf \
   && echo "engine_id = gost" >> /usr/local/ssl/openssl.cnf \
-  && echo "dynamic_path = /usr/local/ssl/lib/engines-1.1/gost.so" >> /usr/local/ssl/openssl.cnf \
+  && echo "dynamic_path = ${ENGINES}/gost.so" >> /usr/local/ssl/openssl.cnf \
   && echo "default_algorithms = ALL" >> /usr/local/ssl/openssl.cnf \
   && echo "CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet" >> /usr/local/ssl/openssl.cnf
 
 # Rebuild curl
-ARG CURL_VERSION=7.59.0
-ARG CURL_SHA256="099d9c32dc7b8958ca592597c9fabccdf4c08cfb7c114ff1afbbc4c6f13c9e9e"
+ARG CURL_VERSION=7.64.1
+ARG CURL_SHA256="432d3f466644b9416bc5b649d344116a753aeaa520c8beaf024a90cba9d3d35d"
 RUN apt-get remove curl -y \
   && rm -rf /usr/local/include/curl \
   && cd /usr/local/src \
