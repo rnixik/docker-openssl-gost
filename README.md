@@ -1,4 +1,4 @@
-# Docker image with OpenSSL 1.1.0, GOST engine and cURL
+# Docker image with OpenSSL 1.1.1d, GOST engine and cURL
 
 This image was built to have ability to connect to servers with GOST SSL certificates.
 In addition, it helps to encrypt, decrypt, hash messages with GOST algorithms.
