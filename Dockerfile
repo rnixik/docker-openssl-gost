@@ -1,39 +1,30 @@
 FROM debian:stretch-slim
 
-RUN apt-get update && apt-get install build-essential wget git -y
-
-# Build openssl
-#ARG OPENSSL_VERSION=1.1.1b
-#ARG OPENSSL_SHA256="5c557b023230413dfb0756f3137a13e6d726838ccd1430888ad15bfb2b43ea4b"
-#RUN cd /usr/local/src \
-#  && wget "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz" -O "openssl-${OPENSSL_VERSION}.tar.gz" \
-#  && echo "$OPENSSL_SHA256" "openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - \
-#  && tar -zxvf "openssl-${OPENSSL_VERSION}.tar.gz" \
-#  && cd "openssl-${OPENSSL_VERSION}" \
-#  && ./config shared -d --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
-#  && make all && make install_sw \
-#  && mv /usr/bin/openssl /root/ \
-#  && ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl \
-#  && rm -rf "/usr/local/src/openssl-${OPENSSL_VERSION}.tar.gz" "/usr/local/src/openssl-${OPENSSL_VERSION}"
-
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install build-essential wget git cmake unzip gcc -y
 
 ARG PREFIX="/usr/local/ssl"
-RUN git clone --depth 1 -b master https://github.com/openssl/openssl.git \
-  && cd openssl \
+
+# Build openssl
+ARG OPENSSL_VERSION="OpenSSL_1_1_1d"
+ARG OPENSSL_SHA256="a366e3b6d8269b5e563dabcdfe7366d15cb369517f05bfa66f6864c2a60e39e8"
+RUN cd /usr/local/src \
+  && wget "https://github.com/openssl/openssl/archive/${OPENSSL_VERSION}.zip" -O "${OPENSSL_VERSION}.zip" \
+  && echo "$OPENSSL_SHA256" "${OPENSSL_VERSION}.zip" | sha256sum -c - \
+  && unzip "${OPENSSL_VERSION}.zip" -d ./ \
+  && cd "openssl-${OPENSSL_VERSION}" \
   && ./config shared -d --prefix=${PREFIX} --openssldir=${PREFIX} && make -j$(nproc) all && make install \
   && mv /usr/bin/openssl /root/ \
-  && ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl
+  && ln -s ${PREFIX}/bin/openssl /usr/bin/openssl
 
 # Update path of shared libraries
-RUN echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
+RUN echo "${PREFIX}/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
 
-ARG ENGINES=/usr/local/ssl/lib/engines-3
+ARG ENGINES=${PREFIX}/lib/engines-3
 
 # Build GOST-engine for OpenSSL
-ARG GOST_ENGINE_VERSION=af328b347cfbb3e4fa672b03700d70fdc8da892a
-ARG GOST_ENGINE_SHA256="e013a87983f2c030316c4b897c1ea7a12aab4bd8e36231d9e0ead25bd401d5d1"
-RUN apt-get update && apt-get install cmake unzip gcc -y \
-  && cd /usr/local/src \
+ARG GOST_ENGINE_VERSION=58a46b289d6b8df06072fc9c0304f4b2d3f4b051
+ARG GOST_ENGINE_SHA256="6b47e24ee1ce619557c039fc0c1201500963f8f8dea83cad6d05d05b3dcc2255"
+RUN cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
   && echo "$GOST_ENGINE_SHA256" gost-engine.zip | sha256sum -c - \
   && unzip gost-engine.zip -d ./ \
@@ -42,31 +33,31 @@ RUN apt-get update && apt-get install cmake unzip gcc -y \
   && mkdir build \
   && cd build \
   && cmake -DCMAKE_BUILD_TYPE=Release \
-   -DOPENSSL_ROOT_DIR=/usr/local/ssl -DOPENSSL_LIBRARIES=/usr/local/ssl/lib -DOPENSSL_ENGINES_DIR=${ENGINES} .. \
+   -DOPENSSL_ROOT_DIR=${PREFIX} -DOPENSSL_LIBRARIES=${PREFIX}/lib -DOPENSSL_ENGINES_DIR=${ENGINES} .. \
   && cmake --build . --config Release \
+  && cmake --build . --target install --config Release \
   && cd bin \
   && cp gostsum gost12sum /usr/local/bin \
   && cd .. \
-  && cp bin/gost.so "${ENGINES}" \
   && rm -rf "/usr/local/src/gost-engine.zip" "/usr/local/src/engine-${GOST_ENGINE_VERSION}"
 
 # Enable engine
-RUN sed -i '6i openssl_conf=openssl_def' /usr/local/ssl/openssl.cnf \
-  && echo "" >> /usr/local/ssl/openssl.cnf \
-  && echo "# OpenSSL default section" >> /usr/local/ssl/openssl.cnf \
-  && echo "[openssl_def]" >> /usr/local/ssl/openssl.cnf \
-  && echo "engines = engine_section" >> /usr/local/ssl/openssl.cnf \
-  && echo "" >> /usr/local/ssl/openssl.cnf \
-  && echo "# Engine scetion" >> /usr/local/ssl/openssl.cnf \
-  && echo "[engine_section]" >> /usr/local/ssl/openssl.cnf \
-  && echo "gost = gost_section" >> /usr/local/ssl/openssl.cnf \
-  && echo "" >> /usr/local/ssl/openssl.cnf \
-  && echo "# Engine gost section" >> /usr/local/ssl/openssl.cnf \
-  && echo "[gost_section]" >> /usr/local/ssl/openssl.cnf \
-  && echo "engine_id = gost" >> /usr/local/ssl/openssl.cnf \
-  && echo "dynamic_path = ${ENGINES}/gost.so" >> /usr/local/ssl/openssl.cnf \
-  && echo "default_algorithms = ALL" >> /usr/local/ssl/openssl.cnf \
-  && echo "CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet" >> /usr/local/ssl/openssl.cnf
+RUN sed -i '6i openssl_conf=openssl_def' ${PREFIX}/openssl.cnf \
+  && echo "" >>${PREFIX}/openssl.cnf \
+  && echo "# OpenSSL default section" >>${PREFIX}/openssl.cnf \
+  && echo "[openssl_def]" >>${PREFIX}/openssl.cnf \
+  && echo "engines = engine_section" >>${PREFIX}/openssl.cnf \
+  && echo "" >>${PREFIX}/openssl.cnf \
+  && echo "# Engine scetion" >>${PREFIX}/openssl.cnf \
+  && echo "[engine_section]" >>${PREFIX}/openssl.cnf \
+  && echo "gost = gost_section" >>${PREFIX}/openssl.cnf \
+  && echo "" >> ${PREFIX}/openssl.cnf \
+  && echo "# Engine gost section" >>${PREFIX}/openssl.cnf \
+  && echo "[gost_section]" >>${PREFIX}/openssl.cnf \
+  && echo "engine_id = gost" >>${PREFIX}/openssl.cnf \
+  && echo "dynamic_path = ${ENGINES}/gost.so" >>${PREFIX}/openssl.cnf \
+  && echo "default_algorithms = ALL" >>${PREFIX}/openssl.cnf \
+  && echo "CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet" >>${PREFIX}/openssl.cnf
 
 # Rebuild curl
 ARG CURL_VERSION=7.64.1
@@ -78,23 +69,23 @@ RUN apt-get remove curl -y \
   && echo "$CURL_SHA256" "curl-${CURL_VERSION}.tar.gz" | sha256sum -c - \
   && tar -zxvf "curl-${CURL_VERSION}.tar.gz" \
   && cd "curl-${CURL_VERSION}" \
-  && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L/usr/local/ssl/lib -Wl,-rpath,/usr/local/ssl/lib" LD_LIBRARY_PATH=/usr/local/ssl/lib \
-   ./configure --prefix=/usr/local/curl --with-ssl=/usr/local/ssl --with-libssl-prefix=/usr/local/ssl \
+  && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L${PREFIX}/lib -Wl,-rpath,${PREFIX}/lib" LD_LIBRARY_PATH=${PREFIX}l/lib \
+   ./configure --prefix=/usr/local/curl --with-ssl=${PREFIX} --with-libssl-prefix=${PREFIX} \
   && make \
   && make install \
   && ln -s /usr/local/curl/bin/curl /usr/bin/curl \
   && rm -rf "/usr/local/src/curl-${CURL_VERSION}.tar.gz" "/usr/local/src/curl-${CURL_VERSION}" 
 
 # Rebuild stunnel
-ARG STUNNEL_VERSION=5.50
-ARG STUNNEL_SHA256="951d92502908b852a297bd9308568f7c36598670b84286d3e05d4a3a550c0149"
+ARG STUNNEL_VERSION=5.55
+ARG STUNNEL_SHA256="90de69f41c58342549e74c82503555a6426961b29af3ed92f878192727074c62"
 RUN cd /usr/local/src \
   && wget "https://www.stunnel.org/downloads/stunnel-${STUNNEL_VERSION}.tar.gz" -O "stunnel-${STUNNEL_VERSION}.tar.gz" \
   && echo "$STUNNEL_SHA256" "stunnel-${STUNNEL_VERSION}.tar.gz" | sha256sum -c - \
   && tar -zxvf "stunnel-${STUNNEL_VERSION}.tar.gz" \
   && cd "stunnel-${STUNNEL_VERSION}" \
-  && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L/usr/local/ssl/lib -Wl,-rpath,/usr/local/ssl/lib" LD_LIBRARY_PATH=/usr/local/ssl/lib \
-   ./configure --prefix=/usr/local/stunnel --with-ssl=/usr/local/ssl \
+  && CPPFLAGS="-I${PREFIX}/include" LDFLAGS="-L${PREFIX}/lib -Wl,-rpath,${PREFIX}/lib" LD_LIBRARY_PATH=${PREFIX}/lib \
+   ./configure --prefix=/usr/local/stunnel --with-ssl=${PREFIX} \
   && make \
   && make install \
   && ln -s /usr/local/stunnel/bin/stunnel /usr/bin/stunnel \
