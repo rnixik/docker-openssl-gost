@@ -1,20 +1,20 @@
 FROM debian:stretch-slim
 
-ARG NGINX_VERSION=1.12.2
-ARG NGINX_SHA256="305f379da1d5fb5aefa79e45c829852ca6983c7cd2a79328f8e084a324cf0416"
-ARG OPENSSL_VERSION=1.1.0g
-ARG OPENSSL_SHA256="de4d501267da39310905cb6dc8c6121f7a2cad45a7707f76df828fe1b85073af"
+ARG NGINX_VERSION=1.17.6
+ARG NGINX_SHA256=3cb4a5314dc0ab0a4e8a7b51ae17c027133417a45cc6c5a96e3dd80141c237b6
+ARG OPENSSL_VERSION=OpenSSL_1_1_1d
+ARG OPENSSL_SHA256=a366e3b6d8269b5e563dabcdfe7366d15cb369517f05bfa66f6864c2a60e39e8
 
 RUN apt-get update \
-  && apt-get install wget build-essential libpcre++-dev libz-dev ca-certificates --no-install-recommends -y \
+  && apt-get install wget build-essential libpcre++-dev libz-dev ca-certificates unzip cmake --no-install-recommends -y \
   && mkdir -p /usr/local/src \
   && cd /usr/local/src \
   && wget "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" -O "nginx-${NGINX_VERSION}.tar.gz" \
   && echo "$NGINX_SHA256" "nginx-${NGINX_VERSION}.tar.gz" | sha256sum -c - \
   && tar -zxvf "nginx-${NGINX_VERSION}.tar.gz" \
-  && wget "https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz" -O "openssl-${OPENSSL_VERSION}.tar.gz" \
-  && echo "$OPENSSL_SHA256" "openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - \
-  && tar -zxvf "openssl-${OPENSSL_VERSION}.tar.gz" \
+  && wget "https://github.com/openssl/openssl/archive/${OPENSSL_VERSION}.zip" -O "${OPENSSL_VERSION}.zip" \
+  && echo "$OPENSSL_SHA256" "${OPENSSL_VERSION}.zip" | sha256sum -c - \
+  && unzip "${OPENSSL_VERSION}.zip" -d ./ \
   && cd "nginx-${NGINX_VERSION}" \
   && sed -i 's|--prefix=$ngx_prefix no-shared|--prefix=$ngx_prefix|' auto/lib/openssl/make \
   && ./configure \
@@ -60,15 +60,16 @@ RUN apt-get update \
   --with-openssl="/usr/local/src/openssl-${OPENSSL_VERSION}" \
   && make \
   && make install \
+  && echo "/usr/local/src/openssl-${OPENSSL_VERSION}/.openssl/lib" >>/etc/ld.so.conf.d/ssl.conf && ldconfig \
+  && cp "/usr/local/src/openssl-${OPENSSL_VERSION}/.openssl/bin/openssl" /usr/bin/openssl \
   && mkdir -p /var/cache/nginx/
 
 ENV OPENSSL_DIR="/usr/local/src/openssl-${OPENSSL_VERSION}/.openssl"
 
 # Build GOST-engine for OpenSSL
-ARG GOST_ENGINE_VERSION=3bd506dcbb835c644bd15a58f0073ae41f76cb06
-ARG GOST_ENGINE_SHA256="4777b1dcb32f8d06abd5e04a9a2b5fe9877c018db0fc02f5f178f8a66b562025"
-RUN apt-get install cmake unzip -y \
-  && cd /usr/local/src \
+ARG GOST_ENGINE_VERSION=58a46b289d6b8df06072fc9c0304f4b2d3f4b051
+ARG GOST_ENGINE_SHA256=6b47e24ee1ce619557c039fc0c1201500963f8f8dea83cad6d05d05b3dcc2255
+RUN cd /usr/local/src \
   && wget "https://github.com/gost-engine/engine/archive/${GOST_ENGINE_VERSION}.zip" -O gost-engine.zip \
   && echo "$GOST_ENGINE_SHA256" gost-engine.zip | sha256sum -c - \
   && unzip gost-engine.zip -d ./ \
@@ -80,8 +81,10 @@ RUN apt-get install cmake unzip -y \
    -DOPENSSL_ROOT_DIR="${OPENSSL_DIR}" \
    -DOPENSSL_INCLUDE_DIR="${OPENSSL_DIR}/include" \
    -DOPENSSL_LIBRARIES="${OPENSSL_DIR}/lib" .. \
+   -DOPENSSL_ENGINES_DIR="${OPENSSL_DIR}/lib/engines-1.1" \
   && cmake --build . --config Release \
-  && cp ../bin/gost.so "${OPENSSL_DIR}/lib/engines-1.1" \
+  && cmake --build . --target install --config Release \
+  && cp ./bin/gost.so "${OPENSSL_DIR}/lib/engines-1.1" \
   && cp -r "${OPENSSL_DIR}/lib/engines-1.1" /usr/lib/x86_64-linux-gnu/ \
   && rm -rf "/usr/local/src/gost-engine.zip" "/usr/local/src/engine-${GOST_ENGINE_VERSION}" 
 
@@ -103,8 +106,6 @@ RUN sed -i '6i openssl_conf=openssl_def' "${OPENSSL_CONF}" \
   && echo "dynamic_path = ${OPENSSL_DIR}/lib/engines-1.1/gost.so" >> "${OPENSSL_CONF}f" \
   && echo "default_algorithms = ALL" >> "${OPENSSL_CONF}" \
   && echo "CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet" >> "${OPENSSL_CONF}"
-
-RUN cp "${OPENSSL_DIR}/bin/openssl" /usr/bin/openssl
 
 # forward request and error logs to docker log collector
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \
