@@ -14,4 +14,6 @@ COPY --from=openssl-gost /usr/local/bin/gost12sum /usr/local/bin/gost12sum
 COPY --from=openssl-gost /usr/local/ssl/lib/pkgconfig/* /usr/lib/x86_64-linux-gnu/pkgconfig/
 COPY --from=openssl-gost /usr/local/curl/lib/pkgconfig/* /usr/lib/x86_64-linux-gnu/pkgconfig/
 
+RUN echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
+
 # Add compiling instuctions with custom OpenSSL and cUrl
