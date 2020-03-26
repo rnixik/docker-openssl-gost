@@ -60,8 +60,8 @@ RUN sed -i '6i openssl_conf=openssl_def' ${PREFIX}/openssl.cnf \
   && echo "CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet" >>${PREFIX}/openssl.cnf
 
 # Rebuild curl
-ARG CURL_VERSION=7.64.1
-ARG CURL_SHA256="432d3f466644b9416bc5b649d344116a753aeaa520c8beaf024a90cba9d3d35d"
+ARG CURL_VERSION=7.69.1
+ARG CURL_SHA256="01ae0c123dee45b01bbaef94c0bc00ed2aec89cb2ee0fd598e0d302a6b5e0a98"
 RUN apt-get remove curl -y \
   && rm -rf /usr/local/include/curl \
   && cd /usr/local/src \
@@ -69,7 +69,7 @@ RUN apt-get remove curl -y \
   && echo "$CURL_SHA256" "curl-${CURL_VERSION}.tar.gz" | sha256sum -c - \
   && tar -zxvf "curl-${CURL_VERSION}.tar.gz" \
   && cd "curl-${CURL_VERSION}" \
-  && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L${PREFIX}/lib -Wl,-rpath,${PREFIX}/lib" LD_LIBRARY_PATH=${PREFIX}l/lib \
+  && CPPFLAGS="-I/usr/local/ssl/include" LDFLAGS="-L${PREFIX}/lib -Wl,-rpath,${PREFIX}/lib" LD_LIBRARY_PATH=${PREFIX}/lib \
    ./configure --prefix=/usr/local/curl --with-ssl=${PREFIX} --with-libssl-prefix=${PREFIX} \
   && make \
   && make install \
@@ -77,8 +77,8 @@ RUN apt-get remove curl -y \
   && rm -rf "/usr/local/src/curl-${CURL_VERSION}.tar.gz" "/usr/local/src/curl-${CURL_VERSION}" 
 
 # Rebuild stunnel
-ARG STUNNEL_VERSION=5.55
-ARG STUNNEL_SHA256="90de69f41c58342549e74c82503555a6426961b29af3ed92f878192727074c62"
+ARG STUNNEL_VERSION=5.56
+ARG STUNNEL_SHA256="7384bfb356b9a89ddfee70b5ca494d187605bb516b4fff597e167f97e2236b22"
 RUN cd /usr/local/src \
   && wget "https://www.stunnel.org/downloads/stunnel-${STUNNEL_VERSION}.tar.gz" -O "stunnel-${STUNNEL_VERSION}.tar.gz" \
   && echo "$STUNNEL_SHA256" "stunnel-${STUNNEL_VERSION}.tar.gz" | sha256sum -c - \
