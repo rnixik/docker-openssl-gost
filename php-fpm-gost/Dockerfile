@@ -6,7 +6,7 @@
 
 FROM rnix/openssl-gost AS openssl-gost
 
-FROM debian:stretch-slim
+FROM debian:bullseye-slim
 
 COPY --from=openssl-gost /usr/local/ssl /usr/local/ssl
 COPY --from=openssl-gost /usr/local/ssl/bin/openssl /usr/bin/openssl
