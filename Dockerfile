@@ -91,3 +91,16 @@ RUN cd /usr/local/src \
   && make install \
   && ln -s /usr/local/stunnel/bin/stunnel /usr/bin/stunnel \
   && rm -rf "/usr/local/src/stunnel-${STUNNEL_VERSION}.tar.gz" "/usr/local/src/stunnel-${STUNNEL_VERSION}"
+
+FROM debian:stretch-slim
+
+COPY --from=0 /usr/local/ssl/ /usr/local/ssl/
+COPY --from=0 /usr/local/curl/ /usr/local/curl/
+COPY --from=0 /usr/local/stunnel/ /usr/local/stunnel/
+COPY --from=0 /usr/local/bin/gostsum /usr/local/bin/gostsum
+COPY --from=0 /usr/local/bin/gost12sum /usr/local/bin/gost12sum
+
+RUN ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl \
+ && ln -s /usr/local/curl/bin/curl /usr/bin/curl \
+ && ln -s /usr/local/stunnel/bin/stunnel /usr/bin/stunnel \
+ && echo "/usr/local/ssl/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
