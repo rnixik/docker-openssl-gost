@@ -14,7 +14,8 @@ RUN cd /usr/local/src \
   && cd "openssl-${OPENSSL_VERSION}" \
   && ./config shared -d --prefix=${PREFIX} --openssldir=${PREFIX} && make -j$(nproc) all && make install \
   && mv /usr/bin/openssl /root/ \
-  && ln -s ${PREFIX}/bin/openssl /usr/bin/openssl
+  && ln -s ${PREFIX}/bin/openssl /usr/bin/openssl \
+  && rm -rf "/usr/local/src/${OPENSSL_VERSION}.zip" "/usr/local/src/openssl-${OPENSSL_VERSION}"
 
 # Update path of shared libraries
 RUN echo "${PREFIX}/lib" >> /etc/ld.so.conf.d/ssl.conf && ldconfig
