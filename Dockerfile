@@ -77,8 +77,8 @@ RUN apt-get remove curl -y \
   && rm -rf "/usr/local/src/curl-${CURL_VERSION}.tar.gz" "/usr/local/src/curl-${CURL_VERSION}" 
 
 # Rebuild stunnel
-ARG STUNNEL_VERSION=5.56
-ARG STUNNEL_SHA256="7384bfb356b9a89ddfee70b5ca494d187605bb516b4fff597e167f97e2236b22"
+ARG STUNNEL_VERSION=5.59
+ARG STUNNEL_SHA256="137776df6be8f1701f1cd590b7779932e123479fb91e5192171c16798815ce9f"
 RUN cd /usr/local/src \
   && wget "https://www.stunnel.org/downloads/stunnel-${STUNNEL_VERSION}.tar.gz" -O "stunnel-${STUNNEL_VERSION}.tar.gz" \
   && echo "$STUNNEL_SHA256" "stunnel-${STUNNEL_VERSION}.tar.gz" | sha256sum -c - \
