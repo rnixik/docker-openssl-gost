@@ -5,8 +5,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install build-essen
 ARG PREFIX="/usr/local/ssl"
 
 # Build openssl
-ARG OPENSSL_VERSION="OpenSSL_1_1_1d"
-ARG OPENSSL_SHA256="a366e3b6d8269b5e563dabcdfe7366d15cb369517f05bfa66f6864c2a60e39e8"
+ARG OPENSSL_VERSION="OpenSSL_1_1_1g"
+ARG OPENSSL_SHA256="41bac751d85f89a7d821324b7ffb35526a310db014ab6a4fe17fddaa011b7024"
 RUN cd /usr/local/src \
   && wget "https://github.com/openssl/openssl/archive/${OPENSSL_VERSION}.zip" -O "${OPENSSL_VERSION}.zip" \
   && echo "$OPENSSL_SHA256" "${OPENSSL_VERSION}.zip" | sha256sum -c - \
@@ -77,8 +77,8 @@ RUN apt-get remove curl -y \
   && rm -rf "/usr/local/src/curl-${CURL_VERSION}.tar.gz" "/usr/local/src/curl-${CURL_VERSION}" 
 
 # Rebuild stunnel
-ARG STUNNEL_VERSION=5.56
-ARG STUNNEL_SHA256="7384bfb356b9a89ddfee70b5ca494d187605bb516b4fff597e167f97e2236b22"
+ARG STUNNEL_VERSION=5.60
+ARG STUNNEL_SHA256="c45d765b1521861fea9b03b425b9dd7d48b3055128c0aec673bba5ef9b8f787d"
 RUN cd /usr/local/src \
   && wget "https://www.stunnel.org/downloads/stunnel-${STUNNEL_VERSION}.tar.gz" -O "stunnel-${STUNNEL_VERSION}.tar.gz" \
   && echo "$STUNNEL_SHA256" "stunnel-${STUNNEL_VERSION}.tar.gz" | sha256sum -c - \
